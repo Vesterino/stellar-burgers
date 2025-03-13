@@ -1,14 +1,14 @@
 import { Preloader } from '@ui';
 import { FeedUI } from '@ui-pages';
 import { FC, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector } from '../../services/store';
 import { getFeed } from '../../services/slices/feed-slice';
-import { RootState, useAppDispatch } from '../../services/store';
+import { useAppDispatch } from '../../services/store';
 
 export const Feed: FC = () => {
   /** TODO: взять переменную из стора */
   const dispatch = useAppDispatch();
-  const { orders, isLoading } = useSelector((state: RootState) => state.feed);
+  const { orders, isLoading } = useSelector((state) => state.feed);
 
   useEffect(() => {
     dispatch(getFeed());

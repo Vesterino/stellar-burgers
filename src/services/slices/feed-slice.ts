@@ -4,6 +4,7 @@ import { TOrder } from '@utils-types';
 
 export type TFeedState = {
   orders: TOrder[];
+  orderData: TOrder | null;
   total: number | null;
   totalToday: number | null;
   isLoading: boolean;
@@ -12,6 +13,7 @@ export type TFeedState = {
 
 const initialState: TFeedState = {
   orders: [],
+  orderData: null,
   total: null,
   totalToday: null,
   isLoading: false,

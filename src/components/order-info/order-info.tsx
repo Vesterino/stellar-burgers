@@ -1,25 +1,37 @@
-import { FC, useMemo } from 'react';
+import { FC, useEffect, useMemo } from 'react';
 import { Preloader } from '../ui/preloader';
 import { OrderInfoUI } from '../ui/order-info';
 import { TIngredient } from '@utils-types';
+import { useAppDispatch, useSelector } from '../../services/store';
+import { useLocation, useParams } from 'react-router-dom';
+import { getUserOrders } from '../../services/slices/user-slice';
+import { getFeed } from '../../services/slices/feed-slice';
 
 export const OrderInfo: FC = () => {
   /** TODO: взять переменные orderData и ingredients из стора */
-  const orderData = {
-    createdAt: '',
-    ingredients: [],
-    _id: '',
-    status: '',
-    name: '',
-    updatedAt: 'string',
-    number: 0
-  };
+  const dispatch = useAppDispatch();
+  const location = useLocation();
+  const { number } = useParams();
+  const items = useSelector((state) => state.ingredients.items);
+  const feedOrders = useSelector((state) => state.feed.orders);
+  const userOrders = useSelector((state) => state.user.orders);
 
-  const ingredients: TIngredient[] = [];
+  const isProfileOrder = location.pathname.includes('/profile');
+  const orders = isProfileOrder ? userOrders : feedOrders;
+
+  useEffect(() => {
+    if (isProfileOrder) {
+      dispatch(getUserOrders());
+    } else {
+      dispatch(getFeed());
+    }
+  }, [isProfileOrder, dispatch]);
+
+  const orderData = orders.find((order) => String(order.number) === number);
 
   /* Готовим данные для отображения */
   const orderInfo = useMemo(() => {
-    if (!orderData || !ingredients.length) return null;
+    if (!orderData || !items.length) return null;
 
     const date = new Date(orderData.createdAt);
 
@@ -30,7 +42,7 @@ export const OrderInfo: FC = () => {
     const ingredientsInfo = orderData.ingredients.reduce(
       (acc: TIngredientsWithCount, item) => {
         if (!acc[item]) {
-          const ingredient = ingredients.find((ing) => ing._id === item);
+          const ingredient = items.find((ing) => ing._id === item);
           if (ingredient) {
             acc[item] = {
               ...ingredient,
@@ -57,7 +69,7 @@ export const OrderInfo: FC = () => {
       date,
       total
     };
-  }, [orderData, ingredients]);
+  }, [orderData, items]);
 
   if (!orderInfo) {
     return <Preloader />;

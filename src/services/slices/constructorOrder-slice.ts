@@ -1,13 +1,13 @@
-import { orderBurgerApi } from '@api';
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { TConstructorIngredient } from '@utils-types';
+import { getOrderByNumberApi, orderBurgerApi } from '@api';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { TConstructorIngredient, TOrder } from '@utils-types';
 
 export type ConstructorOrderState = {
   bun: TConstructorIngredient | null;
   ingredients: TConstructorIngredient[];
   selectedIngredients: TConstructorIngredient[];
   orderRequest: boolean;
-  orderModalData: any;
+  orderModalData: TOrder | null;
 };
 
 const initialState: ConstructorOrderState = {
@@ -34,12 +34,42 @@ const constructorOrderSlice = createSlice({
       state.bun = action.payload;
     },
     addIngredient: (state, action) => {
-      state.ingredients.push(action.payload);
+      state.selectedIngredients.push(action.payload);
     },
     removeIngredient: (state, action) => {
-      state.ingredients = state.ingredients.filter(
-        (ingredient) => ingredient._id !== action.payload._id
+      const index = state.selectedIngredients.findIndex(
+        (ingredient) => ingredient._id === action.payload
       );
+
+      if (index !== -1) {
+        state.selectedIngredients.splice(index, 1);
+      }
+    },
+    moveIngredient: (
+      state,
+      action: PayloadAction<{ fromIndex: number; toIndex: number }>
+    ) => {
+      const { fromIndex, toIndex } = action.payload;
+      if (
+        toIndex >= 0 &&
+        toIndex < state.selectedIngredients.length &&
+        fromIndex !== toIndex
+      ) {
+        [
+          state.selectedIngredients[fromIndex],
+          state.selectedIngredients[toIndex]
+        ] = [
+          state.selectedIngredients[toIndex],
+          state.selectedIngredients[fromIndex]
+        ];
+      }
+    },
+    clearOrderData: (state) => {
+      state.orderModalData = null;
+    },
+    clearConstructorItems: (state) => {
+      state.bun = null;
+      state.selectedIngredients = [];
     }
   },
   extraReducers: (builder) => {
@@ -59,7 +89,13 @@ const constructorOrderSlice = createSlice({
   }
 });
 
-export const { addBun, addIngredient, removeIngredient } =
-  constructorOrderSlice.actions;
+export const {
+  addBun,
+  addIngredient,
+  removeIngredient,
+  moveIngredient,
+  clearOrderData,
+  clearConstructorItems
+} = constructorOrderSlice.actions;
 
 export default constructorOrderSlice.reducer;
