@@ -8,7 +8,6 @@ import { getUserOrders } from '../../services/slices/user-slice';
 import { getFeed } from '../../services/slices/feed-slice';
 
 export const OrderInfo: FC = () => {
-  /** TODO: взять переменные orderData и ingredients из стора */
   const dispatch = useAppDispatch();
   const location = useLocation();
   const { number } = useParams();

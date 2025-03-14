@@ -5,7 +5,6 @@ import { updateUserAuth } from '../../services/slices/user-slice';
 import { useNavigate } from 'react-router-dom';
 
 export const Profile: FC = () => {
-  /** TODO: взять переменную из стора */
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector((state) => state.user);
