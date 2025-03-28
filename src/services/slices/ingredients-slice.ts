@@ -18,6 +18,7 @@ export const getIngredients = createAsyncThunk(
   'ingredients/getIngredients',
   async () => {
     const response = await getIngredientsApi();
+    console.log('Ингредиенты', response);
     return response;
   }
 );

@@ -23,6 +23,7 @@ export const fetchConstructorOrder = createAsyncThunk(
   'constructorOrder/fetchConstructorOrder',
   async (ingredientsIds: string[]) => {
     const response = await orderBurgerApi(ingredientsIds);
+    console.log('Заказ:', response.order);
     return response.order;
   }
 );

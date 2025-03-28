@@ -52,6 +52,7 @@ export const loginUserAuth = createAsyncThunk(
 
 export const getUserAuth = createAsyncThunk('user/getUserAuth', async () => {
   const response = await getUserApi();
+  console.log('Пользователь:', response);
   return response;
 });
 
