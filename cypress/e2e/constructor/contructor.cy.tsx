@@ -6,6 +6,7 @@ describe('список ингредиентов', () => {
   beforeEach(() => {
     cy.intercept('GET', '/api/ingredients', { fixture: 'ingredients.json' });
     cy.visit('http://localhost:4000/');
+    cy.viewport(1920, 1080);
   });
 
   it('добавление булок в конструктор бургера', () => {
@@ -26,6 +27,7 @@ describe('модальное окно ингредиента', () => {
   beforeEach(() => {
     cy.intercept('GET', 'api/ingredients', { fixture: 'ingredients.json' });
     cy.visit('http://localhost:4000/');
+    cy.viewport(1920, 1080);
   });
 
   it('открытие модального окна ингредиента', () => {
@@ -61,6 +63,7 @@ describe('модальное окно заказа', () => {
     );
     cy.setCookie('accessToken', 'test-accessToken');
     cy.visit('http://localhost:4000/');
+    cy.viewport(1920, 1080);
   });
 
   afterEach(() => {
