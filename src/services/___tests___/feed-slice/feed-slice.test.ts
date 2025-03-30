@@ -1,92 +1,91 @@
-// import { getFeed, feedSlice, TFeedState } from '../../slices/feed-slice';
-// import { getFeedsApi } from '@api';
-// import { describe, test, expect } from '@jest/globals';
+import { getFeedsApi } from '@api';
+import feedReducer, { getFeed, TFeedState } from '../../slices/feed-slice';
 
-// jest.mock('@api', () => ({
-//   getFeedsApi: jest.fn()
-// }));
+jest.mock('@api');
 
-// describe('feedSlice', () => {
-//   const initialState: TFeedState = {
-//     orders: [],
-//     orderData: null,
-//     total: null,
-//     totalToday: null,
-//     isLoading: false,
-//     error: null
-//   };
+describe('feed slice', () => {
+  const initialState: TFeedState = {
+    orders: [],
+    orderData: null,
+    total: null,
+    totalToday: null,
+    isLoading: false,
+    error: null
+  };
 
-//   test('should return the initial state', () => {
-//     expect(feedSlice.reducer(undefined, { type: 'unknown' })).toEqual(
-//       initialState
-//     );
-//   });
+  const mockOrders = {
+    orders: [
+      {
+        _id: '1',
+        ingredients: ['ingredient1', 'ingredient2'],
+        status: 'done',
+        name: 'Тестовый бургер',
+        number: 1234,
+        createdAt: '2024-03-20',
+        updatedAt: '2024-03-20'
+      }
+    ],
+    total: 100,
+    totalToday: 10
+  };
 
-//   describe('getFeed async thunk', () => {
-//     it('should handle pending state', () => {
-//       const action = { type: getFeed.pending.type };
-//       const nextState = feedSlice.reducer(initialState, action);
-//       expect(nextState.isLoading).toBe(true);
-//       expect(nextState.error).toBeNull();
-//     });
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
 
-//     test('should handle fulfilled state', async () => {
-//       const mockResponse = {
-//         orders: [{ id: 1, name: 'order 1' }],
-//         total: 100,
-//         totalToday: 10
-//       };
-//       getFeedsApi.mockResolvedValue(mockResponse);
+  test('возвращение начального состояния', () => {
+    expect(feedReducer(undefined, { type: '' })).toEqual(initialState);
+  });
 
-//       const action = await getFeed.fulfilled(mockResponse, '', undefined);
-//       const nextState = feedSlice.reducer(initialState, action);
+  describe('getFeed', () => {
+    test('обработка pending состояния', () => {
+      const action = { type: getFeed.pending.type };
+      const state = feedReducer(initialState, action);
 
-//       expect(nextState.isLoading).toBe(false);
-//       expect(nextState.orders).toEqual(mockResponse.orders);
-//       expect(nextState.total).toBe(mockResponse.total);
-//       expect(nextState.totalToday).toBe(mockResponse.totalToday);
-//     });
+      expect(state.isLoading).toBe(true);
+      expect(state.error).toBeNull();
+    });
 
-//     test('should handle rejected state', async () => {
-//       const mockError = new Error('Network error');
-//       getFeedsApi.mockRejectedValue(mockError);
+    test('обработка fulfilled состояния', () => {
+      const action = {
+        type: getFeed.fulfilled.type,
+        payload: mockOrders
+      };
+      const state = feedReducer(initialState, action);
 
-//       const action = await getFeed.rejected(mockError, '', undefined);
-//       const nextState = feedSlice.reducer(initialState, action);
+      expect(state.isLoading).toBe(false);
+      expect(state.orders).toEqual(mockOrders.orders);
+      expect(state.total).toBe(mockOrders.total);
+      expect(state.totalToday).toBe(mockOrders.totalToday);
+      expect(state.error).toBeNull();
+    });
 
-//       expect(nextState.isLoading).toBe(false);
-//       expect(nextState.error).toBe('Network error');
-//     });
-//   });
+    test('обработка rejected состояния', () => {
+      const action = {
+        type: getFeed.rejected.type,
+        error: { message: 'Тестовая ошибка' }
+      };
+      const state = feedReducer(initialState, action);
 
-//   describe('reducers', () => {
-//     it('should set isLoading to true on pending', () => {
-//       const action = { type: getFeed.pending.type };
-//       const nextState = feedSlice.reducer(initialState, action);
-//       expect(nextState.isLoading).toBe(true);
-//     });
+      expect(state.isLoading).toBe(false);
+      expect(state.error).toBe('Тестовая ошибка');
+    });
 
-//     test('should set orders on fulfilled', () => {
-//       const mockOrders = [{ id: 1, name: 'Order 1' }];
-//       const action = {
-//         type: getFeed.fulfilled.type,
-//         payload: { orders: mockOrders, total: 100, totalToday: 50 }
-//       };
-//       const nextState = feedSlice.reducer(initialState, action);
-//       expect(nextState.orders).toEqual(mockOrders);
-//       expect(nextState.total).toBe(100);
-//       expect(nextState.totalToday).toBe(50);
-//     });
+    test('должен успешно получить данные через thunk', async () => {
+      (getFeedsApi as jest.Mock).mockResolvedValue(mockOrders);
 
-//     test('should set error message on rejected', () => {
-//       const errorMessage = 'Error fetching data';
-//       const action = {
-//         type: getFeed.rejected.type,
-//         error: { message: errorMessage }
-//       };
-//       const nextState = feedSlice.reducer(initialState, action);
-//       expect(nextState.isLoading).toBe(false);
-//       expect(nextState.error).toBe(errorMessage);
-//     });
-//   });
-// });
+      const dispatch = jest.fn();
+      const thunk = getFeed();
+
+      await thunk(dispatch, () => ({}), {});
+
+      const [pending, fulfilled] = dispatch.mock.calls.map(
+        (call) => call[0].type
+      );
+
+      expect(pending).toBe(getFeed.pending.type);
+      expect(fulfilled).toBe(getFeed.fulfilled.type);
+      expect(getFeedsApi).toHaveBeenCalled();
+    });
+  });
+});

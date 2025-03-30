@@ -1,132 +1,219 @@
-// import { configureStore } from '@reduxjs/toolkit';
-// import userReducer, {
-//   registerUserAuth,
-//   loginUserAuth,
-//   getUserAuth,
-//   updateUserAuth,
-//   logoutUserAuth,
-//   getUserOrders,
-//   setUser,
-//   userLogout
-// } from '../../slices/user-slice';
-// import {
-//   registerUserApi,
-//   loginUserApi,
-//   getUserApi,
-//   updateUserApi,
-//   logoutApi,
-//   getOrdersApi
-// } from '@api';
+import {
+  getOrdersApi,
+  getUserApi,
+  loginUserApi,
+  logoutApi,
+  registerUserApi,
+  updateUserApi
+} from '@api';
+import { configureStore } from '@reduxjs/toolkit';
+import { TUser } from '@utils-types';
+import { setCookie } from '../../../utils/cookie';
+import userReducer, {
+  authChecked,
+  getUserAuth,
+  getUserOrders,
+  loginUserAuth,
+  logoutUserAuth,
+  registerUserAuth,
+  setUser,
+  updateUserAuth,
+  userLogout,
+  UserState
+} from '../../slices/user-slice';
 
-// describe('userSlice', () => {
-//   let store;
+global.localStorage = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+  length: 0,
+  key: jest.fn()
+};
 
-//   beforeEach(() => {
-//     store = configureStore({ reducer: { user: userReducer } });
-//   });
+jest.mock('../../../utils/cookie');
+jest.mock('@api');
 
-//   it('should handle setUser', () => {
-//     const user = { id: 1, name: 'John Doe' };
-//     store.dispatch(setUser(user));
-//     const state = store.getState().user;
-//     expect(state.user).toEqual(user);
-//     expect(state.isAuthenticated).toBe(true);
-//     expect(state.isAuthChecked).toBe(true);
-//   });
+describe('слайс пользователя', () => {
+  let store: ReturnType<typeof configureStore<{ user: UserState }>>;
 
-//   it('should handle userLogout', () => {
-//     store.dispatch(userLogout());
-//     const state = store.getState().user;
-//     expect(state.user).toBeNull();
-//     expect(state.isAuthenticated).toBe(false);
-//     expect(state.isAuthChecked).toBe(false);
-//   });
+  beforeEach(() => {
+    store = configureStore({
+      reducer: {
+        user: userReducer
+      }
+    });
+    jest.clearAllMocks();
+  });
 
-//   describe('Async Actions', () => {
-//     it('should handle loginUserAuth.fulfilled', async () => {
-//       const user = { id: 1, name: 'John Doe' };
-//       loginUserApi.mockResolvedValueOnce({
-//         user,
-//         accessToken: 'access',
-//         refreshToken: 'refresh'
-//       });
+  describe('редюсеры слайса пользователя', () => {
+    test('установка флага authChecked', () => {
+      store.dispatch(authChecked());
+      const state = store.getState().user;
+      expect(state.isAuthChecked).toBe(true);
+    });
 
-//       await store.dispatch(
-//         loginUserAuth({ email: 'test@example.com', password: 'password' })
-//       );
-//       const state = store.getState().user;
+    test('должен установить пользователя', () => {
+      const mockUser = { name: 'Test User', email: 'test@test.com' } as TUser;
+      store.dispatch(setUser(mockUser));
+      const state = store.getState().user;
+      expect(state.user).toEqual(mockUser);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isAuthChecked).toBe(true);
+    });
 
-//       expect(state.user).toEqual(user);
-//       expect(state.isAuthenticated).toBe(true);
-//       expect(state.isLoading).toBe(false);
-//       expect(state.error).toBeNull();
-//     });
+    test('обработка выхода пользователя', () => {
+      store.dispatch(userLogout());
+      const state = store.getState().user;
+      expect(state.user).toBeNull();
+      expect(state.isAuthenticated).toBe(false);
+      expect(state.isAuthChecked).toBe(false);
+    });
+  });
 
-//     it('should handle loginUserAuth.rejected', async () => {
-//       loginUserApi.mockRejectedValueOnce(new Error('Invalid credentials'));
+  describe('асихронные санки', () => {
+    const mockUser = { name: 'Test User', email: 'test@test.com' } as TUser;
+    const mockResponse = {
+      user: mockUser,
+      accessToken: 'test-access-token',
+      refreshToken: 'test-refresh-token'
+    };
 
-//       await store.dispatch(
-//         loginUserAuth({ email: 'test@example.com', password: 'password' })
-//       );
-//       const state = store.getState().user;
+    test('обработка успешной регистрации', async () => {
+      (registerUserApi as jest.Mock).mockResolvedValue(mockResponse);
 
-//       expect(state.isAuthenticated).toBe(false);
-//       expect(state.isLoading).toBe(false);
-//       expect(state.error).toBe('Invalid credentials');
-//     });
+      await store.dispatch(
+        registerUserAuth({
+          name: 'Test User',
+          email: 'test@test.com',
+          password: 'password'
+        })
+      );
 
-//     it('should handle registerUserAuth.fulfilled', async () => {
-//       const user = { id: 1, name: 'John Doe' };
-//       registerUserApi.mockResolvedValueOnce({
-//         user,
-//         accessToken: 'access',
-//         refreshToken: 'refresh'
-//       });
+      expect(setCookie).toHaveBeenCalledWith(
+        'accessToken',
+        mockResponse.accessToken
+      );
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        'refreshToken',
+        mockResponse.refreshToken
+      );
 
-//       await store.dispatch(
-//         registerUserAuth({ email: 'test@example.com', password: 'password' })
-//       );
-//       const state = store.getState().user;
+      const state = store.getState().user;
+      expect(state.user).toEqual(mockUser);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isAuthChecked).toBe(true);
+      expect(state.isLoading).toBe(false);
+    });
 
-//       expect(state.user).toEqual(user);
-//       expect(state.isAuthenticated).toBe(true);
-//       expect(state.isLoading).toBe(false);
-//       expect(state.error).toBeNull();
-//     });
+    test('обработка успешного входа', async () => {
+      (loginUserApi as jest.Mock).mockResolvedValue(mockResponse);
 
-//     it('should handle getUserAuth.fulfilled', async () => {
-//       const user = { id: 1, name: 'John Doe' };
-//       getUserApi.mockResolvedValueOnce({ user });
+      await store.dispatch(
+        loginUserAuth({ email: 'test@test.com', password: 'password' })
+      );
 
-//       await store.dispatch(getUserAuth());
-//       const state = store.getState().user;
+      expect(setCookie).toHaveBeenCalledWith(
+        'accessToken',
+        mockResponse.accessToken
+      );
+      expect(localStorage.setItem).toHaveBeenCalledWith(
+        'refreshToken',
+        mockResponse.refreshToken
+      );
 
-//       expect(state.user).toEqual(user);
-//       expect(state.isAuthenticated).toBe(true);
-//       expect(state.isAuthChecked).toBe(true);
-//     });
+      const state = store.getState().user;
+      expect(state.user).toEqual(mockUser);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isAuthChecked).toBe(true);
+      expect(state.isLoading).toBe(false);
+    });
 
-//     it('should handle logoutUserAuth.fulfilled', async () => {
-//       logoutApi.mockResolvedValueOnce(true);
+    test('получение данных пользователя', async () => {
+      (getUserApi as jest.Mock).mockResolvedValue({ user: mockUser });
 
-//       await store.dispatch(logoutUserAuth());
-//       const state = store.getState().user;
+      await store.dispatch(getUserAuth());
 
-//       expect(state.user).toBeNull();
-//       expect(state.isAuthenticated).toBe(false);
-//       expect(state.isAuthChecked).toBe(true);
-//       expect(state.isLoading).toBe(false);
-//     });
+      const state = store.getState().user;
+      expect(state.user).toEqual(mockUser);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isAuthChecked).toBe(true);
+    });
 
-//     it('should handle getUserOrders.fulfilled', async () => {
-//       const orders = [{ id: 1, product: 'Product 1' }];
-//       getOrdersApi.mockResolvedValueOnce(orders);
+    test('обновление данных пользователя', async () => {
+      (updateUserApi as jest.Mock).mockResolvedValue({ user: mockUser });
 
-//       await store.dispatch(getUserOrders());
-//       const state = store.getState().user;
+      await store.dispatch(
+        updateUserAuth({
+          name: 'Test User',
+          email: 'test@test.com',
+          password: 'password'
+        })
+      );
 
-//       expect(state.orders).toEqual(orders);
-//       expect(state.error).toBeNull();
-//     });
-//   });
-// });
+      const state = store.getState().user;
+      expect(state.user).toEqual(mockUser);
+      expect(state.isAuthenticated).toBe(true);
+      expect(state.isAuthChecked).toBe(true);
+      expect(state.isLoading).toBe(false);
+    });
+
+    test('обработка успешного выхода', async () => {
+      (logoutApi as jest.Mock).mockResolvedValue({ success: true });
+
+      await store.dispatch(logoutUserAuth());
+
+      expect(localStorage.removeItem).toHaveBeenCalledWith('refreshToken');
+      expect(setCookie).toHaveBeenCalledWith('accessToken', '', {
+        expires: -1
+      });
+
+      const state = store.getState().user;
+      expect(state.user).toBeNull();
+      expect(state.isAuthenticated).toBe(false);
+      expect(state.isAuthChecked).toBe(true);
+      expect(state.isLoading).toBe(false);
+    });
+
+    test('получение заказа пользователя', async () => {
+      const mockOrders = [{ id: 1, number: 123 }];
+      (getOrdersApi as jest.Mock).mockResolvedValue(mockOrders);
+
+      await store.dispatch(getUserOrders());
+
+      const state = store.getState().user;
+      expect(state.orders).toEqual(mockOrders);
+      expect(state.error).toBeNull();
+    });
+
+    test('обработка ошибки регистрации', async () => {
+      const errorMessage = 'Registration failed';
+      (registerUserApi as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+      await store.dispatch(
+        registerUserAuth({
+          name: 'Test User',
+          email: 'test@test.com',
+          password: 'password'
+        })
+      );
+
+      const state = store.getState().user;
+      expect(state.error).toBe(errorMessage);
+      expect(state.isLoading).toBe(false);
+    });
+
+    test('обработка ошибки входа', async () => {
+      const errorMessage = 'Login failed';
+      (loginUserApi as jest.Mock).mockRejectedValue(new Error(errorMessage));
+
+      await store.dispatch(
+        loginUserAuth({ email: 'test@test.com', password: 'password' })
+      );
+
+      const state = store.getState().user;
+      expect(state.error).toBe(errorMessage);
+      expect(state.isLoading).toBe(false);
+    });
+  });
+});

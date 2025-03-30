@@ -1,5 +1,6 @@
 import { TConstructorIngredient } from '@utils-types';
 import constructorOrderSlice, {
+  addBun,
   addIngredient,
   removeIngredient,
   moveIngredient,
@@ -11,7 +12,7 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'unique-id')
 }));
 
-describe('Проверка редьюсеров слайса constructor', () => {
+describe('проверка редьюсеров слайса constructor', () => {
   let initialState: ConstructorOrderState;
 
   beforeEach(() => {
@@ -55,6 +56,40 @@ describe('Проверка редьюсеров слайса constructor', () =>
     image_large: 'tomato-image-large-url',
     uniqueId: 'unique-id-2'
   };
+
+  test('обработка добавления булочки', () => {
+    const bunMock: TConstructorIngredient = {
+      _id: '1',
+      id: '1',
+      name: 'Краторная булка N-200i',
+      type: 'bun',
+      proteins: 80,
+      fat: 24,
+      carbohydrates: 53,
+      calories: 420,
+      price: 1255,
+      image: 'bun-image-url',
+      image_mobile: 'bun-image-mobile-url',
+      image_large: 'bun-image-large-url',
+      uniqueId: 'unique-bun-id'
+    };
+
+    const nextState = constructorOrderSlice(initialState, addBun(bunMock));
+
+    expect(nextState.bun).toEqual(bunMock);
+
+    const newBunMock: TConstructorIngredient = {
+      ...bunMock,
+      _id: '1',
+      id: '1',
+      name: 'Черная булка Dark Side',
+      uniqueId: 'unique-bun-id-2'
+    };
+
+    const updatedState = constructorOrderSlice(nextState, addBun(newBunMock));
+
+    expect(updatedState.bun).toEqual(newBunMock);
+  });
 
   test('обработка добавления ингредиента', () => {
     const nextState = constructorOrderSlice(

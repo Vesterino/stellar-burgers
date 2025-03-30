@@ -1,95 +1,72 @@
-import ingredientsReducer, {
-  getIngredients,
-  TIngredientsState
-} from '../../slices/ingredients-slice';
-import { getIngredientsApi } from '@api';
-import { describe, test, expect, jest } from '@jest/globals';
-import { PayloadAction } from '@reduxjs/toolkit';
 import { TIngredient } from '@utils-types';
+import {
+  getIngredients,
+  ingredientsSlice
+} from '../../slices/ingredients-slice';
 
-jest.mock('@api', () => ({
-  getIngredientsApi: jest.fn()
-}));
+describe('ingredients slice', () => {
+  const initialState = {
+    items: [],
+    isLoading: false,
+    error: null
+  };
 
-describe('ingredientsSlice', () => {
-  let initialState: TIngredientsState;
-  const mockData: TIngredient[] = [
+  const mockIngredients: TIngredient[] = [
     {
       _id: '1',
-      name: 'Cheese',
-      type: 'dairy',
-      proteins: 25,
-      fat: 20,
-      carbohydrates: 5,
-      calories: 300,
-      price: 100,
-      image: 'cheese.png',
-      image_mobile: 'cheese-mobile.png',
-      image_large: 'cheese-large.png'
+      name: 'Краторная булка N-200i',
+      type: 'bun',
+      proteins: 80,
+      fat: 24,
+      carbohydrates: 53,
+      calories: 420,
+      price: 1255,
+      image: 'test.jpg',
+      image_mobile: 'test-mobile.jpg',
+      image_large: 'test-large.jpg'
     }
   ];
 
-  beforeEach(() => {
-    initialState = {
-      items: [],
-      isLoading: false,
-      error: null
-    };
+  test('возвращение начального состояния', () => {
+    const result = ingredientsSlice.reducer(undefined, { type: '' });
+    expect(result).toEqual(initialState);
   });
 
-  test('should handle initial state', () => {
-    expect(ingredientsReducer(undefined, {} as PayloadAction)).toEqual(
-      initialState
-    );
-  });
+  test('обработка pending состояния', () => {
+    const action = { type: getIngredients.pending.type };
+    const state = ingredientsSlice.reducer(initialState, action);
 
-  test('should handle getIngredients.pending', () => {
-    const nextState = ingredientsReducer(
-      initialState,
-      getIngredients.pending('requestId')
-    );
-    expect(nextState).toEqual({
+    expect(state).toEqual({
       ...initialState,
       isLoading: true,
       error: null
     });
   });
 
-  test('should handle getIngredients.fulfilled', () => {
-    const nextState = ingredientsReducer(
-      initialState,
-      getIngredients.fulfilled(mockData, 'requestId')
-    );
-    expect(nextState).toEqual({
+  test('обработка fulfilled состояния', () => {
+    const action = {
+      type: getIngredients.fulfilled.type,
+      payload: mockIngredients
+    };
+    const state = ingredientsSlice.reducer(initialState, action);
+
+    expect(state).toEqual({
       ...initialState,
       isLoading: false,
-      items: mockData,
+      items: mockIngredients,
       error: null
     });
   });
 
-  test('should handle getIngredients.rejected', () => {
-    const error = 'Failed to fetch';
-    const nextState = ingredientsReducer(
-      initialState,
-      getIngredients.rejected(new Error(error), 'requestId')
-    );
-    expect(nextState).toEqual({ ...initialState, isLoading: false, error });
-  });
+  test('обработка rejected состояния', () => {
+    const error = 'Ошибка загрузки';
+    const action = { type: getIngredients.rejected.type, payload: error };
+    const state = ingredientsSlice.reducer(initialState, action);
 
-  test('should dispatch correct actions for getIngredients', async () => {
-    const dispatch = jest.fn();
-    const thunk = getIngredients();
-
-    (getIngredientsApi as jest.Mock).mockResolvedValueOnce(mockData);
-
-    await thunk(dispatch, () => initialState, undefined);
-
-    expect(dispatch).toHaveBeenCalledWith(
-      getIngredients.pending(expect.any(String))
-    );
-    expect(dispatch).toHaveBeenCalledWith(
-      getIngredients.fulfilled(mockData, expect.any(String))
-    );
+    expect(state).toEqual({
+      ...initialState,
+      isLoading: false,
+      error: error
+    });
   });
 });

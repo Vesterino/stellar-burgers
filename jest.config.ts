@@ -195,11 +195,6 @@ const config: JestConfigWithTsJest = {
   // Whether to use watchman for file crawling
   // watchman: true,
   preset: 'ts-jest',
-  collectCoverageFrom: [
-    '**/*.{js,jsx}',
-    '!**/node_modules/**',
-    '!**/vendor/**'
-  ],
   moduleNameMapper: {
     '^@pages/(.*)$': '<rootDir>/src/pages/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
