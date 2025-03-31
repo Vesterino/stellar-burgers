@@ -11,7 +11,7 @@ export type ConstructorOrderState = {
   orderModalData: TOrder | null;
 };
 
-const initialState: ConstructorOrderState = {
+export const initialState: ConstructorOrderState = {
   bun: null,
   ingredients: [],
   selectedIngredients: [],

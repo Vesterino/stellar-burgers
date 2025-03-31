@@ -4,7 +4,7 @@ import constructorOrderSlice, {
   addIngredient,
   removeIngredient,
   moveIngredient,
-  ConstructorOrderState
+  initialState
 } from '../../slices/constructorOrder-slice';
 import { describe, test, expect } from '@jest/globals';
 
@@ -13,18 +13,6 @@ jest.mock('uuid', () => ({
 }));
 
 describe('проверка редьюсеров слайса constructor', () => {
-  let initialState: ConstructorOrderState;
-
-  beforeEach(() => {
-    initialState = {
-      bun: null,
-      ingredients: [],
-      selectedIngredients: [],
-      orderRequest: false,
-      orderModalData: null
-    };
-  });
-
   const ingredientMock: TConstructorIngredient = {
     _id: '1',
     id: '1',

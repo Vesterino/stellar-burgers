@@ -1,18 +1,9 @@
 import { getFeedsApi } from '@api';
-import feedReducer, { getFeed, TFeedState } from '../../slices/feed-slice';
+import feedReducer, { getFeed, initialState } from '../../slices/feed-slice';
 
 jest.mock('@api');
 
 describe('feed slice', () => {
-  const initialState: TFeedState = {
-    orders: [],
-    orderData: null,
-    total: null,
-    totalToday: null,
-    isLoading: false,
-    error: null
-  };
-
   const mockOrders = {
     orders: [
       {
